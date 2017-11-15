@@ -1,11 +1,15 @@
 import csv
 import math
+import copy
+from sklearn import linear_model
+import numpy
+import pandas
 
 class LocationGrid(object):
 
 	MILES_PER_DEGREE = 69.0
 
-	def __init__(self, mileBlockSize, topLeft, bottomRight):
+	def __init__(self, mileBlockSize, topLeft, bottomRight, entry=[]):
 		# assert that coordinates make sense
 		assert(topLeft[0] > bottomRight[0] and topLeft[1] < bottomRight[1])
 
@@ -16,7 +20,7 @@ class LocationGrid(object):
 
 		gridHeight = self.latToRow(bottomRight[0]) + 1
 		gridWidth = self.longToCol(bottomRight[1]) + 1
-		self.locationGrid = [[[] for j in range(gridWidth)] for i in range(gridHeight)]	
+		self.locationGrid = [[copy.deepcopy(entry) for j in range(gridWidth)] for i in range(gridHeight)]	
 
 
 	def latToRow(self, latitude):
@@ -25,37 +29,48 @@ class LocationGrid(object):
 	def longToCol(self, longitude):
 		return int(math.floor( abs(longitude - self.topLeft[1]) / self.degreeBlockSize ))
 
-	def addEntry(self, row, latitude, longitude):
+	def inBounds(self, r, c):
+		return r >= 0 and r < len(self.locationGrid) and c >= 0 and c < len(self.locationGrid[0])
+
+	def numRows(self):
+		return len(self.locationGrid)
+
+	def numCols(self):
+		if len(self.locationGrid) == 0:
+			return 0
+		else:
+			return len(self.locationGrid[0])
+
+	def addEntry(self, dataRow, latitude, longitude):
 		r = self.latToRow(float(latitude))
 		c = self.longToCol(float(longitude))
 
 		# check bounds
-		if r < 0 or r >= len(self.locationGrid) or c < 0 or c >= len(self.locationGrid[0]):
+		if not self.inBounds(r, c):
 			return False
 
-		self.locationGrid[r][c].append(row)
+		self.locationGrid[r][c].append(dataRow)
 		return True
 
 
-def evaluateCrimes(locationGrid):
-	count = 0
-	with open('Chicago_Crimes_2012_to_2017.csv', 'rb') as csvfile:
-		dataReader = csv.reader(csvfile)
+def evaluateCrimes():
 
-		# read first line, which has titles
-		dataReader.next()
+	data = pandas.read_csv("ChicagoEditedDataset.csv", delimiter=',', skiprows=1)
+	print 'Finished loading'
 
-		for row in dataReader:
-			latitude, longitude = row[20], row[21]
+	inputMatrix = data[:10,:-1]
+	outputMatrix = data[:10,-1:]
+		
+	logreg = linear_model.LogisticRegression()
 
-			# skip rows missing lat / long data
-			if latitude == '' or longitude == '':
-				continue
+	logreg.fit(inputMatrix, outputMatrix)
 
-			if locationGrid.addEntry(row, latitude, longitude):
-				count += 1
-			
-	print count
+	print logreg.predict([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
+	print logreg.predict_proba([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
+
+
+
+
 
 if __name__ == '__main__':
 
@@ -63,15 +78,8 @@ if __name__ == '__main__':
 	topLeft = (42.038730, -87.969580)
 	bottomRight = (41.640738, -87.510901)
 
-	locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight)
-	evaluateCrimes(locationGrid)
-
-
-## naive bayes
-# P(crime | location, ..., other factors) = P(location, ..., other factors | crime) P (crime) / P (location, ..., other factors)
-
-
-
+	# locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight)
+	evaluateCrimes()
 
 
 
