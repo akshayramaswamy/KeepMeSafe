@@ -2,8 +2,10 @@ import csv
 import math
 import copy
 from sklearn import linear_model
+from sklearn.externals import joblib
 import numpy
 import pandas
+import random
 
 class LocationGrid(object):
 
@@ -55,18 +57,48 @@ class LocationGrid(object):
 
 def evaluateCrimes():
 
-	data = pandas.read_csv("ChicagoEditedDataset.csv", delimiter=',', skiprows=1)
-	print 'Finished loading'
+	with open('ChicagoEditedDataset.csv', 'rb') as csvfile:
+		dataReader = csv.reader(csvfile)
+		print dataReader.next()
+		return
 
-	inputMatrix = data[:10,:-1]
-	outputMatrix = data[:10,-1:]
+		print 'here'
+
+		with open('SmallTestDataset.csv', 'wb') as testfile:
+			dataWriter = csv.writer(testfile)
+
+			count = 0
+			for row in dataReader:
+
+				if count > 200:
+					row[-1] = 0
+
+				dataWriter.writerow(row)
+
+				count += 1
+				if count == 1000: break
+
+	print 'Finished creating new dataset'
+
+	dataChunks = pandas.read_csv("SmallTestDataset.csv", delimiter=",", skiprows=1, \
+		iterator=True, chunksize=500)
+	
+	logreg = linear_model.LogisticRegression(warm_start=True)
+
+	for chunk in dataChunks:
+		chunk = chunk.as_matrix()
+
+		inputMatrix = chunk[:,:-1]
+		outputMatrix = chunk[:,-1:].ravel()
 		
-	logreg = linear_model.LogisticRegression()
+		logreg.fit(inputMatrix, outputMatrix)
 
-	logreg.fit(inputMatrix, outputMatrix)
+	sample = numpy.reshape([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
 
-	print logreg.predict([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
-	print logreg.predict_proba([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
+	print logreg.predict(sample)
+	print logreg.predict_proba(sample)
+	
+	joblib.dump(logreg, 'logisticModel.pkl')
 
 
 
