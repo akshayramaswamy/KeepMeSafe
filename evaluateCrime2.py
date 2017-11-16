@@ -55,48 +55,38 @@ class LocationGrid(object):
 		return True
 
 
-def evaluateCrimes():
+def learnLogisticModel():
 
-	with open('ChicagoEditedDataset.csv', 'rb') as csvfile:
-		dataReader = csv.reader(csvfile)
-		print dataReader.next()
-		return
-
-		print 'here'
-
-		with open('SmallTestDataset.csv', 'wb') as testfile:
-			dataWriter = csv.writer(testfile)
-
-			count = 0
-			for row in dataReader:
-
-				if count > 200:
-					row[-1] = 0
-
-				dataWriter.writerow(row)
-
-				count += 1
-				if count == 1000: break
-
-	print 'Finished creating new dataset'
-
-	dataChunks = pandas.read_csv("SmallTestDataset.csv", delimiter=",", skiprows=1, \
-		iterator=True, chunksize=500)
+	dataChunks = pandas.read_csv("ShuffledTestDataset.csv", delimiter=",", skiprows=1, \
+		iterator=True, chunksize=100)
 	
-	logreg = linear_model.LogisticRegression(warm_start=True)
+	# expected [[ 0.09553929  0.90446071]]
+	# logreg = linear_model.LogisticRegression()
+	logreg = linear_model.SGDClassifier(loss="log", max_iter=1000, tol=1e-3, random_state=1)
+
+	firstChunk = True
 
 	for chunk in dataChunks:
+		print 1
 		chunk = chunk.as_matrix()
 
 		inputMatrix = chunk[:,:-1]
 		outputMatrix = chunk[:,-1:].ravel()
 		
-		logreg.fit(inputMatrix, outputMatrix)
+		if firstChunk:
+			# logreg.fit(inputMatrix, outputMatrix)
+			logreg.partial_fit(inputMatrix, outputMatrix, classes=[0, 1])
+			firstChunk = False
+		else:
+			# logreg.fit(inputMatrix, outputMatrix)
+			logreg.partial_fit(inputMatrix, outputMatrix)
 
 	sample = numpy.reshape([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
 
 	print logreg.predict(sample)
 	print logreg.predict_proba(sample)
+	print logreg.coef_
+	print logreg.n_iter
 	
 	joblib.dump(logreg, 'logisticModel.pkl')
 
@@ -111,7 +101,7 @@ if __name__ == '__main__':
 	bottomRight = (41.640738, -87.510901)
 
 	# locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight)
-	evaluateCrimes()
+	learnLogisticModel()
 
 
 
