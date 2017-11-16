@@ -96,6 +96,9 @@ class SafePathMDP(util.MDP):
         # Otherwise explore all 8 possible actions
         return getUnvisitedActions(["U", "D", "L", "R", "UL", "UR", "DL", "DR"])
 
+    def isEnd(self, row, col):
+        return row == self.endRow and col == self.endCol
+
     # Given a |state| and |action|, return a list of (newState, prob, reward) tuples
     # corresponding to the states reachable from |state| when taking |action|.
     # A few reminders:
@@ -121,9 +124,12 @@ class SafePathMDP(util.MDP):
             newCol = col
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Down action
         if action == "D":
@@ -131,9 +137,12 @@ class SafePathMDP(util.MDP):
             newCol = col
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Left action
         if action == "L":
@@ -141,9 +150,12 @@ class SafePathMDP(util.MDP):
             newCol = col - 1
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Right action
         if action == "R":
@@ -151,9 +163,12 @@ class SafePathMDP(util.MDP):
             newCol = col + 1
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Up-left action
         if action == "UL":
@@ -161,9 +176,12 @@ class SafePathMDP(util.MDP):
             newCol = col - 1
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Up-right action
         if action == "UR":
@@ -171,9 +189,12 @@ class SafePathMDP(util.MDP):
             newCol = col + 1
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Down-left action
         if action == "DL":
@@ -181,9 +202,12 @@ class SafePathMDP(util.MDP):
             newCol = col - 1
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
         # Down-right action
         if action == "DR":
@@ -191,9 +215,12 @@ class SafePathMDP(util.MDP):
             newCol = col + 1
             newNumEdges = numEdges + 1
             newSumRewards = sumRewards + self.locationGrid[newRow][newCol][1]
-            newAverageRewards = newSumRewards / (float) (numEdges)
             newState = (newRow, newCol, newNumEdges, newSumRewards)
-            return [(newState, prob, newAverageRewards)]
+            if self.isEnd(newRow, newCol):
+                reward = newSumRewards / (float) (newNumEdges)
+            else:
+                reward = 0
+            return [(newState, prob, reward)]
 
     def discount(self):
         return 1
