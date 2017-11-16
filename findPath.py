@@ -72,18 +72,16 @@ def solveMDP(probabilityGrid, startRow, startCol, endRow, endCol):
 	optPolicy = alg.pi
 	optValue = alg.V
 	loc = (startRow, startCol)
-	print [l for l in optValue.keys() if optValue[l] > 0]
-	#print optPolicy[(10, 10)]
-	#print optPolicy[(15, 14)]
-	#print optPolicy[(15, 16)]
-	print optValue[(13, 13)]
-	loc = (endRow, endCol)
-	for i in range(10):
+	endLoc = (endRow, endCol)
+	while loc != endLoc:
+		print loc
 		row, col = loc
-		newLoc = (row - 1, col - 1)
-		print newLoc
-		print optPolicy[newLoc]
-		loc = newLoc
+		action = optPolicy[loc]
+		loc = getNewLoc(loc[0], loc[1], action)
+		# newLoc = (row - 1, col - 1)
+		# print newLoc
+		# print optPolicy[newLoc]
+		# loc = newLoc
 
 	# for i in range(100):
 	# 	print loc
@@ -116,7 +114,7 @@ if __name__ == '__main__':
     		
 
   	#print board
-	solveMDP(board, 10, 10, 15, 15)
+	solveMDP(board, 10, 10, 40, 20)
 	
 	#print board
 

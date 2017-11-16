@@ -46,10 +46,6 @@ class ValueIteration(MDPAlgorithm):
             newV = {}
             for state in mdp.states:
                 # This evaluates to zero for end states, which have no available actions (by definition)
-                #print "New State"
-                #print "========="
-                #print state
-                #print mdp.actions(state)
                 newV[state] = max(computeQ(mdp, V, state, action) for action in mdp.actions(state))
             numIters += 1
             print max(abs(V[state] - newV[state]) for state in mdp.states)
@@ -57,8 +53,8 @@ class ValueIteration(MDPAlgorithm):
                 V = newV
                 break
             V = newV
-            print [str(l[0]) + "," + str(l[1]) + " : " + str(V[l]) for l in V.keys() if V[l] > 0]
-            print "================================================================================"
+           # print [str(l[0]) + "," + str(l[1]) + " : " + str(V[l]) for l in V.keys()]
+            #print "================================================================================"
 
         # Compute the optimal policy now
         pi = computeOptimalPolicy(mdp, V)
