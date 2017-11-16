@@ -1,4 +1,5 @@
 import mdpUtil
+import math
 
 
 class DistMDP(mdpUtil.MDP):
@@ -105,6 +106,9 @@ class DistMDP(mdpUtil.MDP):
     def isEnd(self, row, col):
         return row == self.endRow and col == self.endCol
 
+    def distance(self, row1, col1, row2, col2):
+        return math.sqrt((row1 - row2)**2 + (col1 - col2)**2)
+
     # Given a |state| and |action|, return a list of (newState, prob, reward) tuples
     # corresponding to the states reachable from |state| when taking |action|.
     # A few reminders:
@@ -118,11 +122,14 @@ class DistMDP(mdpUtil.MDP):
         prob = 1
         reward = -1
 
+        #print numEdges
+
         # Set state as visited
-        self.locationGrid[row][col][1] = True
+        #self.locationGrid[row][col][1] = True
 
         # End state: reached destination
         if row == self.endRow and col == self.endCol:
+            print "GOT TO END"
             return []
 
         # Up action
@@ -130,56 +137,104 @@ class DistMDP(mdpUtil.MDP):
             newRow = row - 1
             newCol = col
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0)]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Down action
         if action == "D":
             newRow = row + 1
             newCol = col
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0)]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Left action
         if action == "L":
             newRow = row
             newCol = col - 1
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0)]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Right action
         if action == "R":
             newRow = row
             newCol = col + 1
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0)]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Up-left action
         if action == "UL":
             newRow = row - 1
             newCol = col - 1
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0)]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Up-right action
         if action == "UR":
             newRow = row - 1
             newCol = col + 1
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0)]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Down-left action
         if action == "DL":
             newRow = row + 1
             newCol = col - 1
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0 )]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
         # Down-right action
         if action == "DR":
             newRow = row + 1
             newCol = col + 1
             newState = (newRow, newCol)
-            return [(newState, prob, reward)]
+            if self.isEnd(newRow, newCol):
+                return [(newState, prob, 0 )]
+            if self.locationGrid[newRow][newCol][1]:
+                return []
+            else:
+                reward = -1 * self.distance(newRow, newCol, self.endRow, self.endCol)
+                return [(newState, prob, reward)]
 
     def discount(self):
         return 1

@@ -20,9 +20,14 @@ class ValueIteration(MDPAlgorithm):
     all of the values change by less than epsilon.
     The ValueIteration class is a subclass of util.MDPAlgorithm (see util.py).
     '''
-    def solve(self, mdp, epsilon=0.001):
+    def solve(self, mdp, epsilon=100):
         mdp.computeStates()
         def computeQ(mdp, V, state, action):
+            # if mdp.succAndProbReward(state, action) != []:
+            #     print "CHECK"
+            #     print state
+            #     print action
+            #     print mdp.succAndProbReward(state, action)
             # Return Q(state, action) based on V(state).
             return sum(prob * (reward + mdp.discount() * V[newState]) \
                             for newState, prob, reward in mdp.succAndProbReward(state, action))
@@ -37,19 +42,23 @@ class ValueIteration(MDPAlgorithm):
         V = collections.defaultdict(float)  # state -> value of state
         numIters = 0
         while True:
+            print numIters
             newV = {}
             for state in mdp.states:
                 # This evaluates to zero for end states, which have no available actions (by definition)
-                print "New State"
-                print "========="
-                print state
-                print mdp.actions(state)
+                #print "New State"
+                #print "========="
+                #print state
+                #print mdp.actions(state)
                 newV[state] = max(computeQ(mdp, V, state, action) for action in mdp.actions(state))
             numIters += 1
+            print max(abs(V[state] - newV[state]) for state in mdp.states)
             if max(abs(V[state] - newV[state]) for state in mdp.states) < epsilon:
                 V = newV
                 break
             V = newV
+            print [str(l[0]) + "," + str(l[1]) + " : " + str(V[l]) for l in V.keys() if V[l] > 0]
+            print "================================================================================"
 
         # Compute the optimal policy now
         pi = computeOptimalPolicy(mdp, V)
