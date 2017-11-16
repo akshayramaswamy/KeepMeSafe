@@ -1,14 +1,14 @@
 import csv
 import re
 from datetime import datetime
-from evaluateCrime2 import LocationGrid
+from evaluateCrime import LocationGrid
 
 
-def createRow(dataWriter, r, c, weekday, hour, crime):
-	newRow = [r, c] + [0 if i != weekday else 1 for i in range(7)] + \
-		[0 if i != hour else 1 for i in range(24)] + [crime]
+def featureExtractor(r, c, weekday, hour, totalNumRows, totalNumCols):
+	newRow = [0 if i != r else 1 for i in range(totalNumRows)] + [0 if i != c else 1 for i in range(totalNumCols)] + \
+		[0 if i != weekday else 1 for i in range(7)] + [0 if i != hour else 1 for i in range(24)]
 	
-	dataWriter.writerow(newRow)
+	return newRow
 
 
 if __name__ == '__main__':
@@ -22,10 +22,15 @@ if __name__ == '__main__':
 	locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight, \
 		[set(), set()])
 
+	print locationGrid.numRows(), locationGrid.numCols()
+	quit()
+
 	count = 0
 
 	with open('ChicagoEditedDatasetDec.csv', 'wb') as newfile:
 		dataWriter = csv.writer(newfile)
+
+		dataWriter.writerow(['Row', 'Col', 'Day of Week', 'Hour', 'Crime'])
 
 		# reformat rows of old crime dataset 
 		with open('Chicago_Crimes_2012_to_2017.csv', 'rb') as oldfile:
@@ -70,7 +75,7 @@ if __name__ == '__main__':
 				locationGrid.locationGrid[r][c][0].add(weekday)
 				locationGrid.locationGrid[r][c][1].add(hour)
 
-				createRow(dataWriter, r, c, weekday, hour, 1)
+				dataWriter.writerow([r, c, weekday, hour, 1])
 				count += 1
 
 		# generate safe rows
@@ -87,7 +92,7 @@ if __name__ == '__main__':
 							continue
 
 						# generate a safe data row
-						createRow(dataWriter, r, c, weekday, hour, 0)
+						dataWriter.writerow([r, c, weekday, hour, 0])
 						count += 1
 
 		print '{} rows generated.'.format(count)
