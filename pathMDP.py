@@ -60,7 +60,7 @@ class SafePathMDP(util.MDP):
         row = state[0]
         col = state[1]
         # Find the special case actions - on boundary of grid
-        if row == 0 or row == len(self.locationGrid) - 1 or col = 0 or col == len(self.locationGrid[0]) - 1:
+        if row == 0 or row == len(self.locationGrid) - 1 or col == 0 or col == len(self.locationGrid[0]) - 1:
             # Top Left Corner
             if row == 0 and col == 0:
                 return getUnvisitedActions(["D", "R", "DR"])

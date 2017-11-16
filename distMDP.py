@@ -1,4 +1,7 @@
-class DistMDP(util.MDP):
+import mdpUtil
+
+
+class DistMDP(mdpUtil.MDP):
     def __init__(self, locationGrid, startRow, startCol, endRow, endCol):
         """
         cardValues: list of integers (face values for each card included in the deck)
@@ -18,37 +21,39 @@ class DistMDP(util.MDP):
         return (self.row, self.col)
 
     # Given a list of valid actions, remove all actions that take you to a visited square in the grid
-    def getUnvisitedActions(self, actions):
+    def getUnvisitedActions(self, actions,row,col):
+        return actions
+
         if "U" in actions:
-            if self.locationGrid[row - 1][col][2]:
+            if self.locationGrid[row - 1][col][1]:
                 actions.remove("U")
 
         if "D" in actions:
-            if self.locationGrid[row + 1][col][2]:
+            if self.locationGrid[row + 1][col][1]:
                 actions.remove("D")
 
         if "L" in actions:
-            if self.locationGrid[row][col - 1][2]:
+            if self.locationGrid[row][col - 1][1]:
                 actions.remove("L")
 
         if "R" in actions:
-            if self.locationGrid[row][col + 1][2]:
+            if self.locationGrid[row][col + 1][1]:
                 actions.remove("R")
 
         if "UL" in actions:
-            if self.locationGrid[row - 1][col - 1][2]:
+            if self.locationGrid[row - 1][col - 1][1]:
                 actions.remove("UL")
 
         if "UR" in actions:
-            if self.locationGrid[row - 1][col + 1][2]:
+            if self.locationGrid[row - 1][col + 1][1]:
                 actions.remove("UR")
 
         if "DL" in actions:
-            if self.locationGrid[row + 1][col - 1][2]:
+            if self.locationGrid[row + 1][col - 1][1]:
                 actions.remove("DL")
 
         if "DR" in actions:
-            if self.locationGrid[row + 1][col + 1][2]:
+            if self.locationGrid[row + 1][col + 1][1]:
                 actions.remove("DR")
 
         return actions
@@ -60,41 +65,42 @@ class DistMDP(util.MDP):
         row = state[0]
         col = state[1]
         # Find the special case actions - on boundary of grid
-        if row == 0 or row == len(self.locationGrid) - 1 or col = 0 or col == len(self.locationGrid[0]) - 1:
+        if row == 0 or row == len(self.locationGrid) - 1 or col == 0 or col == len(self.locationGrid[0]) - 1:
             # Top Left Corner
             if row == 0 and col == 0:
-                return getUnvisitedActions(["D", "R", "DR"])
+                return self.getUnvisitedActions(["D", "R", "DR"], row, col)
 
             # Top Right Corner
             if row == 0 and col == len(self.locationGrid[0]) - 1:
-                return getUnvisitedActions(["D", "L", "DL"])
+                return self.getUnvisitedActions(["D", "L", "DL"], row, col)
 
             # Bottom Left Corner
             if row == len(self.locationGrid) - 1 and col == 0:
-                return getUnvisitedActions(["U", "R", "UR"])
+                return self.getUnvisitedActions(["U", "R", "UR"], row, col)
 
             # Bottom Right Corner
             if row == len(self.locationGrid) - 1 and col == len(self.locationGrid[0]) - 1:
-                return getUnvisitedActions(["U", "R", "UR"])
+                return self.getUnvisitedActions(["U", "L", "UL"], row, col)
 
             # Top row
             if row == 0:
-                return getUnvisitedActions(["D", "L", "R", "DL", "DR"])
+                return self.getUnvisitedActions(["D", "L", "R", "DL", "DR"], row, col)
 
             # Bottom row
             if row == len(self.locationGrid) - 1:
-                return getUnvisitedActions(["U", "L", "R", "UL", "UR"])
+                return self.getUnvisitedActions(["U", "L", "R", "UL", "UR"], row, col)
 
             # Left col
             if col == 0:
-                return getUnvisitedActions(["U", "D", "R", "UR", "DR"])
+                return self.getUnvisitedActions(["U", "D", "R", "UR", "DR"], row, col)
 
             # Right Col
             if col == len(self.locationGrid[0]) - 1:
-                return getUnvisitedActions(["U", "D", "L", "UL", "DL"])
+                return self.getUnvisitedActions(["U", "D", "L", "UL", "DL"], row, col)
 
         # Otherwise explore all 8 possible actions
-        return getUnvisitedActions(["U", "D", "L", "R", "UL", "UR", "DL", "DR"])
+        action = self.getUnvisitedActions(["U", "D", "L", "R", "UL", "UR", "DL", "DR"], row, col)
+        return action
 
     def isEnd(self, row, col):
         return row == self.endRow and col == self.endCol
@@ -113,7 +119,7 @@ class DistMDP(util.MDP):
         reward = -1
 
         # Set state as visited
-        self.locationGrid[newRow][newCol][2] = True
+        self.locationGrid[row][col][1] = True
 
         # End state: reached destination
         if row == self.endRow and col == self.endCol:
