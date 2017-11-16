@@ -10,11 +10,25 @@ class DistMDP(mdpUtil.MDP):
         threshold: maximum number of points (i.e. sum of card values in hand) before going bust
         peekCost: how much it costs to peek at the next card
         """
+
+        # Take subgrid account for +/- 0.1 mile error
+        self.dimCol1 = max(min(startCol, endCol), 1)
+        self.dimCol2 = min(max(startCol, endCol), len(locationGrid[0]) - 2) 
+
+        self.dimRow1 = max(min(startRow, endRow), 1)
+        self.dimRow2 = min(max(startRow, endRow), len(locationGrid) - 2)
+
         self.locationGrid = locationGrid
+
         self.row = startRow
         self.col = startCol
         self.endRow = endRow
         self.endCol = endCol
+
+        # print "==============GRID============"
+        # print self.locationGrid
+        # print self.row
+        # print self.col
 
     # Return the start state.
     # State represented as: (curr row, curr col, # of edges currently traversed, total sum of rewards)
@@ -66,37 +80,37 @@ class DistMDP(mdpUtil.MDP):
         row = state[0]
         col = state[1]
         # Find the special case actions - on boundary of grid
-        if row == 0 or row == len(self.locationGrid) - 1 or col == 0 or col == len(self.locationGrid[0]) - 1:
+        if row == self.dimRow1 - 1 or row == self.dimRow2 + 1 or col == self.dimCol1 - 1 or col == self.dimCol2 + 1:
             # Top Left Corner
-            if row == 0 and col == 0:
+            if row == self.dimRow1 - 1 and col == self.dimCol1 - 1:
                 return self.getUnvisitedActions(["D", "R", "DR"], row, col)
 
             # Top Right Corner
-            if row == 0 and col == len(self.locationGrid[0]) - 1:
+            if row == self.dimRow1 - 1 and col == self.dimCol2 + 1:
                 return self.getUnvisitedActions(["D", "L", "DL"], row, col)
 
             # Bottom Left Corner
-            if row == len(self.locationGrid) - 1 and col == 0:
+            if row == self.dimRow2 + 1 and col == self.dimCol1 - 1:
                 return self.getUnvisitedActions(["U", "R", "UR"], row, col)
 
             # Bottom Right Corner
-            if row == len(self.locationGrid) - 1 and col == len(self.locationGrid[0]) - 1:
+            if row == self.dimRow2 + 1 and col == self.dimCol2 + 1:
                 return self.getUnvisitedActions(["U", "L", "UL"], row, col)
 
             # Top row
-            if row == 0:
+            if row == self.dimRow1 - 1:
                 return self.getUnvisitedActions(["D", "L", "R", "DL", "DR"], row, col)
 
             # Bottom row
-            if row == len(self.locationGrid) - 1:
+            if row == self.dimRow2 + 1:
                 return self.getUnvisitedActions(["U", "L", "R", "UL", "UR"], row, col)
 
             # Left col
-            if col == 0:
+            if col == self.dimCol1 - 1:
                 return self.getUnvisitedActions(["U", "D", "R", "UR", "DR"], row, col)
 
             # Right Col
-            if col == len(self.locationGrid[0]) - 1:
+            if col == self.dimCol2 + 1:
                 return self.getUnvisitedActions(["U", "D", "L", "UL", "DL"], row, col)
 
         # Otherwise explore all 8 possible actions
@@ -122,14 +136,8 @@ class DistMDP(mdpUtil.MDP):
         prob = 1
         reward = -1
 
-        #print numEdges
-
-        # Set state as visited
-        #self.locationGrid[row][col][1] = True
-
         # End state: reached destination
         if row == self.endRow and col == self.endCol:
-            print "GOT TO END"
             return []
 
         # Up action
