@@ -57,40 +57,33 @@ class LocationGrid(object):
 
 def learnLogisticModel():
 
-	dataChunks = pandas.read_csv("ShuffledTestDataset.csv", delimiter=",", skiprows=1, \
-		iterator=True, chunksize=100)
+	data = pandas.read_csv("ChicagoEditedDatasetDec.csv", delimiter=",").as_matrix()
 	
-	# expected [[ 0.09553929  0.90446071]]
-	# logreg = linear_model.LogisticRegression()
-	logreg = linear_model.SGDClassifier(loss="log", max_iter=1000, tol=1e-3, random_state=1)
+	logreg = linear_model.LogisticRegression()
+	inputMatrix = data[:,:-1]
+	outputMatrix = data[:,-1:].ravel()
 
-	firstChunk = True
+	logreg.fit(inputMatrix, outputMatrix)
 
-	for chunk in dataChunks:
-		print 1
-		chunk = chunk.as_matrix()
-
-		inputMatrix = chunk[:,:-1]
-		outputMatrix = chunk[:,-1:].ravel()
-		
-		if firstChunk:
-			# logreg.fit(inputMatrix, outputMatrix)
-			logreg.partial_fit(inputMatrix, outputMatrix, classes=[0, 1])
-			firstChunk = False
-		else:
-			# logreg.fit(inputMatrix, outputMatrix)
-			logreg.partial_fit(inputMatrix, outputMatrix)
-
-	sample = numpy.reshape([99, 145, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
+	sample = numpy.reshape([99, 145, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
 
 	print logreg.predict(sample)
 	print logreg.predict_proba(sample)
 	print logreg.coef_
-	print logreg.n_iter
+	# print logreg.n_iter
 	
 	joblib.dump(logreg, 'logisticModel.pkl')
 
 
+def loadLogisticModel():
+
+	logreg = joblib.load('logisticModel.pkl')
+
+	sample = numpy.reshape([400, 145, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
+
+	print logreg.predict(sample)
+	print logreg.predict_proba(sample)
+	print logreg.coef_
 
 
 
@@ -101,7 +94,9 @@ if __name__ == '__main__':
 	bottomRight = (41.640738, -87.510901)
 
 	# locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight)
-	learnLogisticModel()
+	# learnLogisticModel()
+
+	loadLogisticModel()
 
 
 
