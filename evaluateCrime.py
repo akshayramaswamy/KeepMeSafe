@@ -1,69 +1,133 @@
 import csv
 import math
+import copy
+from sklearn import linear_model
+from sklearn.externals import joblib
+from sklearn.feature_extraction import DictVectorizer
+import numpy
+import pandas
+import random
 
-MILES_PER_DEGREE = 69.0
+class LocationGrid(object):
 
-def evaluateCrimes(topLeft, bottomRight, degreeBlockSize):
+	MILES_PER_DEGREE = 69.0
 
-	def latToRow(latitude):
-		return int(math.floor( abs(latitude - topLeft[0]) / degreeBlockSize ))
+	def __init__(self, mileBlockSize, topLeft, bottomRight, entry=[]):
+		# assert that coordinates make sense
+		assert(topLeft[0] > bottomRight[0] and topLeft[1] < bottomRight[1])
 
-	def longToCol(longitude):
-		return int(math.floor( abs(longitude - topLeft[1]) / degreeBlockSize ))
+		# store this for future usage
+		self.topLeft = topLeft
 
-	# create grid that stores data rows at each (i, j) index
-	# lat x long
-	gridHeight = latToRow(bottomRight[0]) + 1
-	gridWidth = longToCol(bottomRight[1]) + 1
-	locationGrid = [[[] for j in range(gridWidth)] for i in range(gridHeight)]	
+		self.degreeBlockSize = mileBlockSize / self.MILES_PER_DEGREE
 
-	count = 0
-	with open('Chicago_Crimes_2012_to_2017.csv', 'rb') as csvfile:
-		dataReader = csv.reader(csvfile)
-
-		# read first line, which has titles
-		dataReader.next()
-
-		for row in dataReader:
-			latitude, longitude = row[20], row[21]
-
-			# skip rows missing lat / long data
-			if latitude == '' or longitude == '':
-				continue
-
-			r = latToRow(float(latitude))
-			c = longToCol(float(longitude))
-
-			# check bounds
-			if r < 0 or r >= len(locationGrid) or c < 0 or c >= len(locationGrid[0]):
-				continue
-
-			count += 1
-			locationGrid[r][c].append(row)
-			
-	print count
+		gridHeight = self.latToRow(bottomRight[0]) + 1
+		gridWidth = self.longToCol(bottomRight[1]) + 1
+		self.locationGrid = [[copy.deepcopy(entry) for j in range(gridWidth)] for i in range(gridHeight)]	
 
 
-def getDegreeBlockSize(mileBlockSize):
-	return mileBlockSize / MILES_PER_DEGREE
+	def latToRow(self, latitude):
+		return int(math.floor( abs(latitude - self.topLeft[0]) / self.degreeBlockSize ))
+
+	def longToCol(self, longitude):
+		return int(math.floor( abs(longitude - self.topLeft[1]) / self.degreeBlockSize ))
+
+	def inBounds(self, r, c):
+		return r >= 0 and r < len(self.locationGrid) and c >= 0 and c < len(self.locationGrid[0])
+
+	def numRows(self):
+		return len(self.locationGrid)
+
+	def numCols(self):
+		if len(self.locationGrid) == 0:
+			return 0
+		else:
+			return len(self.locationGrid[0])
+
+	def addEntry(self, dataRow, latitude, longitude):
+		r = self.latToRow(float(latitude))
+		c = self.longToCol(float(longitude))
+
+		# check bounds
+		if not self.inBounds(r, c):
+			return False
+
+		self.locationGrid[r][c].append(dataRow)
+		return True
+
+
+# class MDPFeatureExtractor(object):
+
+# 	def __init__(self, features):
+# 		self.vectorizer = DictVectorizer()
+
+# 		# dummy dict
+# 		featuresDict = {feat : 0 for feat in features}
+# 		self.vectorizer.fit_transform(featuresDict)
+
+
+# 	def extract(featuresDict):
+
+
+# 		return []
+
+def learnLogisticModel():
+
+	# input and output
+	dictInputData = []
+	outputMatrix = []
+
+	csvDataIterator = pandas.read_csv("ChicagoEditedDatasetDec.csv", delimiter=",")
+
+	for row in csvDataIterator:
+		pass
+		# # row, col, weekday, hour, crime
+		# rowDict = {}
+		# crimeValue = None
+		# for col in row:
+		# 	name = row[col].name
+		# 	value = row[col].values[0]
+
+		# 	if name == 'Crime':
+		# 		crimeValue = value
+		# 	else:
+		# 		rowDict['{}-{}'.format(name, value)] = 1
+
+		# dictInputData.append(rowDict)
+		# outputMatrix.append([crimeValue])
+
+	print 'finished appending'
+
+	vectorizer = DictVectorizer()
+	inputData = vectorizer.fit_transform(dictInputData)
+	outputData = numpy.array(outputMatrix).ravel()
+
+	print vectorizer.get_feature_names()
+
+	# fit model
+	logreg = linear_model.LogisticRegression()
+	logreg.fit(inputData, outputData)
+	
+	joblib.dump(logreg, 'logisticModel.pkl')
+
+
+def loadLogisticModel():
+
+	logreg = joblib.load('logisticModel.pkl')
+
+	sample = numpy.reshape([400, 145, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
+
+	print logreg.predict(sample)
+	print logreg.predict_proba(sample)
+	print logreg.coef_
+
 
 
 if __name__ == '__main__':
 
-	degreeBlockSize = getDegreeBlockSize(0.1)
+	learnLogisticModel()
 
-	# coordinates
-	topLeft = (42.038730, -87.969580)
-	bottomRight = (41.640738, -87.510901)
-
-	evaluateCrimes(topLeft, bottomRight, degreeBlockSize)
-
-
-## naive bayes
-# P(crime | location, ..., other factors) = P(location, ..., other factors | crime) P (crime) / P (location, ..., other factors)
-
-
-
+	# loadLogisticModel()
 
 
 
