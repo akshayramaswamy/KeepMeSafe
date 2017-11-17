@@ -24,10 +24,10 @@ class SearchProblem(searchUtil.SearchProblem):
         # BEGIN_YOUR_CODE (our solution is 7 lines of code, but don't worry if you deviate from this)
         x, y = state
         results = []
-        if x-1 >= 0: results.append(('U', (x-1, y), self.probabilityGrid[x-1][y][0]))
-        if x+1 < ROWS: results.append(('D', (x+1, y), self.probabilityGrid[x+1][y][0]))
-        if y-1 >= 0: results.append(('L', (x, y-1), self.probabilityGrid[x][y-1][0]))
-        if y+1 < COLUMNS: results.append(('R', (x, y+1), self.probabilityGrid[x][y+1][0]))
+        if x-1 >= 0: results.append(('U', (x-1, y), 1 - self.probabilityGrid[x-1][y][0]))
+        if x+1 < ROWS: results.append(('D', (x+1, y), 1 - self.probabilityGrid[x+1][y][0]))
+        if y-1 >= 0: results.append(('L', (x, y-1), 1 - self.probabilityGrid[x][y-1][0]))
+        if y+1 < COLUMNS: results.append(('R', (x, y+1), 1 - self.probabilityGrid[x][y+1][0]))
         return results 
         # END_YOUR_CODE
 
