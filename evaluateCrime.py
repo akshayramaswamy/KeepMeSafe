@@ -12,7 +12,7 @@ class LocationGrid(object):
 
 	MILES_PER_DEGREE = 69.0
 
-	def __init__(self, mileBlockSize, topLeft, bottomRight, entry=[]):
+	def __init__(self, mileBlockSize, topLeft, bottomRight, entry=0):
 		# assert that coordinates make sense
 		assert(topLeft[0] > bottomRight[0] and topLeft[1] < bottomRight[1])
 
@@ -33,7 +33,7 @@ class LocationGrid(object):
 		return int(math.floor( abs(longitude - self.topLeft[1]) / self.degreeBlockSize ))
 
 	def inBounds(self, r, c):
-		return r >= 0 and r < len(self.locationGrid) and c >= 0 and c < len(self.locationGrid[0])
+		return r >= 0 and r < self.numRows() and c >= 0 and c < self.numCols()
 
 	def numRows(self):
 		return len(self.locationGrid)
@@ -77,9 +77,9 @@ def learnLogisticModel():
 	dictInputData = []
 	outputMatrix = []
 
-	csvDataIterator = pandas.read_csv("ChicagoEditedDatasetDec.csv", delimiter=",")
+	csvData = pandas.read_csv("ChicagoEditedDatasetDec.csv", delimiter=",")
 
-	for row in csvDataIterator:
+	for i, row in csvData.iterrows():
 		pass
 		# # row, col, weekday, hour, crime
 		# rowDict = {}

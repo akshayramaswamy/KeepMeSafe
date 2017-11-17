@@ -2,14 +2,7 @@ import csv
 import re
 from datetime import datetime
 from evaluateCrime import LocationGrid
-
-
-def featureExtractor(r, c, weekday, hour, totalNumRows, totalNumCols):
-	newRow = [0 if i != r else 1 for i in range(totalNumRows)] + [0 if i != c else 1 for i in range(totalNumCols)] + \
-		[0 if i != weekday else 1 for i in range(7)] + [0 if i != hour else 1 for i in range(24)]
-	
-	return newRow
-
+import json
 
 if __name__ == '__main__':
 
@@ -22,15 +15,12 @@ if __name__ == '__main__':
 	locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight, \
 		[set(), set()])
 
-	print locationGrid.numRows(), locationGrid.numCols()
-	quit()
-
 	count = 0
 
 	with open('ChicagoEditedDatasetDec.csv', 'wb') as newfile:
 		dataWriter = csv.writer(newfile)
 
-		dataWriter.writerow(['Row', 'Col', 'Day of Week', 'Hour', 'Crime'])
+		dataWriter.writerow(['Row', 'Col', 'Day', 'Hr', 'Crime'])
 
 		# reformat rows of old crime dataset 
 		with open('Chicago_Crimes_2012_to_2017.csv', 'rb') as oldfile:
