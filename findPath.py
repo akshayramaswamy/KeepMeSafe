@@ -8,6 +8,7 @@ import pandas
 import random
 import mdpUtil 
 import distMDP
+import safetyMDP
 
 
 ROWS = 275
@@ -65,7 +66,7 @@ def getNewLoc(row, col, action):
 
 def solveMDP(probabilityGrid, startRow, startCol, endRow, endCol):
 
-	mdp = distMDP.DistMDP(probabilityGrid, startRow, startCol, endRow, endCol)
+	mdp = safetyMDP.SafetyMDP(probabilityGrid, startRow, startCol, endRow, endCol)
 	startState = mdp.startState()
 	alg = mdpUtil.ValueIteration()
 	alg.solve(mdp, .0001)
@@ -114,7 +115,7 @@ if __name__ == '__main__':
     		
 
   	#print board
-	solveMDP(board, 10, 10, 40, 20)
+	solveMDP(board, 10, 10, 13, 13)
 	
 	#print board
 

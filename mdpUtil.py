@@ -92,6 +92,11 @@ class MDP:
             for action in self.actions(state):
                 for newState, prob, reward in self.succAndProbReward(state, action):
                     if newState not in self.states:
+                        print "NEW STATE"
+                        print newState
+
+                        print "ALL STATES"
+                        print self.states
                         self.states.add(newState)
                         queue.append(newState)
         # print "%d states" % len(self.states)
