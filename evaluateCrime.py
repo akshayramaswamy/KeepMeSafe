@@ -19,6 +19,7 @@ class LocationGrid(object):
 		# store this for future usage
 		self.topLeft = topLeft
 
+		self.mileBlockSize = mileBlockSize
 		self.degreeBlockSize = mileBlockSize / self.MILES_PER_DEGREE
 
 		gridHeight = self.latToRow(bottomRight[0]) + 1
@@ -55,21 +56,28 @@ class LocationGrid(object):
 		self.locationGrid[r][c].append(dataRow)
 		return True
 
-
-# class MDPFeatureExtractor(object):
-
-# 	def __init__(self, features):
-# 		self.vectorizer = DictVectorizer()
-
-# 		# dummy dict
-# 		featuresDict = {feat : 0 for feat in features}
-# 		self.vectorizer.fit_transform(featuresDict)
+	def getBlockSize(self):
+		return self.mileBlockSize
 
 
-# 	def extract(featuresDict):
+
+class SafePathFeatureExtractor(object):
+
+	def __init__(self, features, counts):
+		self.vectorizer = DictVectorizer()
+		self.features = features
+
+		dummyData = {}
+		for i, feature in enumerate(features):
+			dummyData.update({'{}-{}'.format(feature, j) : 0 for j in range(counts[i])})
+
+		self.vectorizer.fit_transform(dummyData)
+
+	def extract(self, values):
+		infoDict = {'{}-{}'.format(self.features[i], values[i]) : 1 for i in range(len(self.features))}
+		return self.vectorizer.transform(infoDict)		
 
 
-# 		return []
 
 def learnLogisticModel():
 
@@ -78,23 +86,15 @@ def learnLogisticModel():
 	outputMatrix = []
 
 	csvData = pandas.read_csv("ChicagoEditedDatasetDec.csv", delimiter=",")
+	print 'finished reading'
+
+	colNames = [name for name in csvData.dtypes.index]
 
 	for i, row in csvData.iterrows():
-		pass
-		# # row, col, weekday, hour, crime
-		# rowDict = {}
-		# crimeValue = None
-		# for col in row:
-		# 	name = row[col].name
-		# 	value = row[col].values[0]
-
-		# 	if name == 'Crime':
-		# 		crimeValue = value
-		# 	else:
-		# 		rowDict['{}-{}'.format(name, value)] = 1
-
-		# dictInputData.append(rowDict)
-		# outputMatrix.append([crimeValue])
+		# row, col, weekday, hour, crime
+		rowDict = {'{}-{}'.format(colNames[i], row[i]) : 1 for i in range(len(colNames) - 1)}
+		dictInputData.append(rowDict)
+		outputMatrix.append([row[-1]]) 
 
 	print 'finished appending'
 
@@ -111,11 +111,18 @@ def learnLogisticModel():
 	joblib.dump(logreg, 'logisticModel.pkl')
 
 
-def loadLogisticModel():
+def loadLogisticModel():	
+	# chicago dimensions
+	mileBlockSize = 0.1
+	topLeft = (42.038730, -87.969580)
+	bottomRight = (41.640738, -87.510901)
+	locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight)
+
+	featureExtractor = SafePathFeatureExtractor(['Row', 'Col', 'Day', 'Hr'], \
+		[locationGrid.numRows(), locationGrid.numCols(), 7, 24])
+	sample = featureExtractor.extract([100, 145, 2, 23])
 
 	logreg = joblib.load('logisticModel.pkl')
-
-	sample = numpy.reshape([400, 145, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], (1, -1))
 
 	print logreg.predict(sample)
 	print logreg.predict_proba(sample)
@@ -125,9 +132,9 @@ def loadLogisticModel():
 
 if __name__ == '__main__':
 
-	learnLogisticModel()
+	# learnLogisticModel()
 
-	# loadLogisticModel()
+	loadLogisticModel()
 
 
 
