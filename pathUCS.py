@@ -37,16 +37,47 @@ def getDelta(directionString):
 	return change
 
 
-def displayResults(actions, start):
+def displayResults(actions, start, locationGrid, title=None):
 
-	print start
+	print 'START: {}'.format(start)
 	
-	for action in actions:
-		print '\n{}'.format(action)
+	# # need to reset values
+	# for r in range(locationGrid.numRows()):
+	# 	for c in range(locationGrid.numCols()):
+	# 		locationGrid.locationGrid[r][c] = 0
 
+	# mark start
+	locationGrid.locationGrid[start[0]][start[1]] = 1
+
+	if actions is None:
+		print 'No path found'
+		return
+
+
+	for action in actions:
 		dr, dc = getDelta(action)
 		start = (start[0] + dr, start[1] + dc)
-		print start
+		
+		# mark start
+		locationGrid.locationGrid[start[0]][start[1]] = 1
+		
+		print '%2s --> %s' % (action, start)
+
+	createHeatMap(locationGrid.locationGrid, title, False)
+
+
+def createHeatMap(data, title=None, showLegend=True):
+	# Generate some test data
+	newData = numpy.array(data)
+
+	plt.imshow(newData, cmap='hot', interpolation='nearest')
+
+	if title is not None:
+		plt.title(title)
+	if showLegend:
+		plt.colorbar()
+
+	plt.show()
 
 
 class ShortestPath(searchUtil.SearchProblem):
@@ -116,6 +147,49 @@ class SafestPath(searchUtil.SearchProblem):
         return results 
 
 
+class OptimalPath(searchUtil.SearchProblem):
+    def __init__(self, start, end, locationGrid, maxTime):
+        self.start = start
+        self.end = end
+        self.locationGrid = locationGrid 
+
+        # 15 minutes / mile
+        self.maxActions = int(math.ceil(maxTime / 15.0 / self.locationGrid.getBlockSize()))
+
+    def startState(self):
+        return (self.start, 0)
+
+    def isEnd(self, state):
+        return state[0] == self.end
+
+    def succAndCost(self, state):
+
+    	location, numActions = state
+
+    	if numActions == self.maxActions:
+    		return []
+
+        results = []
+
+        for dr in range(-1, 2):
+        	for dc in range(-1, 2):
+        		if (dr == 0 and dc == 0):
+        			continue
+
+        		newR = location[0] + dr
+        		newC = location[1] + dc
+
+        		if not self.locationGrid.inBounds(newR, newC):
+        			continue
+
+        		results.append((getStringAction(dr, dc), ((newR, newC), numActions + 1), \
+        			self.locationGrid.locationGrid[newR][newC]))
+
+        return results 
+
+
+
+
 if __name__ == '__main__':
 
 	# chicago dimensions
@@ -136,28 +210,31 @@ if __name__ == '__main__':
 			predicted_prob = logreg.predict_proba(sample)
 			locationGrid.locationGrid[i][j] = predicted_prob[0][1]
 
-	# # Generate some test data
-	# data = numpy.array(locationGrid.locationGrid)
-
-	# plt.title('Crime Probabilities')
-	# plt.imshow(data, cmap='hot', interpolation='nearest')
-	# plt.colorbar()
-	# plt.show()
-
 	# latitude, longitude, modelFile
-	start = (10, 10)
-	end = (7, 40)
+	start = (150, 200)
+	end = (200, 240)
 	modelFile = 'logisticModel.pkl'
 
 	ucs = searchUtil.UniformCostSearch(verbose=0)
 
+	# currently can only run one of these at a time,
+	# need to figure out matplot lib
+	# displayResults also changes locationGrid, so need
+	# to create separate instance of class in each call or copy grid beforehand
+
 	# shortest path
-	ucs.solve(ShortestPath(start, end, locationGrid))
-	actions = ucs.actions
-	displayResults(actions, start)
+	# ucs.solve(ShortestPath(start, end, locationGrid))
+	# actions = ucs.actions
+	# displayResults(actions, start, locationGrid, "Shortest Path")
+
+	# # safest path
+	# ucs.solve(SafestPath(start, end, locationGrid))
+	# actions = ucs.actions
+	# displayResults(actions, start, locationGrid, "Safest Path")
 
 	# safest path
-	ucs.solve(SafestPath(start, end, locationGrid))
+	ucs.solve(OptimalPath(start, end, locationGrid, 150))
 	actions = ucs.actions
-	print ' '.join(actions)
+	print 'Total Cost: {}'.format(ucs.totalCost)
+	displayResults(actions, start, locationGrid, "Optimal Path")
 
