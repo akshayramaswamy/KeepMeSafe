@@ -200,8 +200,10 @@ if __name__ == '__main__':
 	locationGrid = LocationGrid(mileBlockSize, topLeft, bottomRight)
 	logreg = joblib.load('logisticModel.pkl')
 
-	featureExtractor = SafePathFeatureExtractor(['Row', 'Col', 'Day', 'Hr'], \
-		[locationGrid.numRows(), locationGrid.numCols(), 7, 24])
+
+
+	# Edison Park 42.008285, -87.813701
+	quit()
 
 	for i in range(locationGrid.numRows()):
 		for j in range(locationGrid.numCols()):
