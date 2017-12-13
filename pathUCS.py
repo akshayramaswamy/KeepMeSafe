@@ -4,6 +4,10 @@ from sklearn.externals import joblib
 import math
 import numpy
 import matplotlib.pyplot as plt
+import requests
+
+MAPS_GEOENCODING_KEY = 'dev'
+MAPS_ROAD_KEY = 'dev'
 
 
 def getStringAction(dr, dc):
@@ -41,13 +45,17 @@ def displayResults(actions, start, locationGrid, title=None):
 
 	print 'START: {}'.format(start)
 	
-	# # need to reset values
-	# for r in range(locationGrid.numRows()):
-	# 	for c in range(locationGrid.numCols()):
-	# 		locationGrid.locationGrid[r][c] = 0
+	# need to reset values
+	maxProb = 0
+	for r in range(locationGrid.numRows()):
+		for c in range(locationGrid.numCols()):
+			maxProb = max(locationGrid.locationGrid[r][c], maxProb)
+
+	# initialize danger sum
+	dangerSum = locationGrid.locationGrid[start[0]][start[1]]
 
 	# mark start
-	locationGrid.locationGrid[start[0]][start[1]] = 1
+	locationGrid.locationGrid[start[0]][start[1]] = maxProb
 
 	if actions is None:
 		print 'No path found'
@@ -57,13 +65,49 @@ def displayResults(actions, start, locationGrid, title=None):
 	for action in actions:
 		dr, dc = getDelta(action)
 		start = (start[0] + dr, start[1] + dc)
+
+		dangerSum += locationGrid.locationGrid[start[0]][start[1]]
 		
 		# mark start
-		locationGrid.locationGrid[start[0]][start[1]] = 1
+		locationGrid.locationGrid[start[0]][start[1]] = maxProb
 		
 		print '%2s --> %s' % (action, start)
 
+	print 'Sum Danger: {}, Num Actions: {}, Mean Danger: {}, Estimated Time: {}, Actual Time: {}'.format(dangerSum, len(actions), \
+		dangerSum / len(actions), len(actions) * locationGrid.getBlockSize() * 15.0, \
+		len([a for a in actions if sum([abs(num) for num in getDelta(a)]) == 1]) * locationGrid.getBlockSize() * 15.0 + \
+		len([a for a in actions if sum([abs(num) for num in getDelta(a)]) == 2]) * math.sqrt(2 * locationGrid.getBlockSize() ** 2) * 15.0)
+
 	createHeatMap(locationGrid.locationGrid, title, False)
+
+
+def snapPoints(actions, start, locationGrid):
+	if actions is None:
+		return None
+
+	latLong = locationGrid.rowColToLatLong(start)
+	latLongPairs = ["{},{}".format(latLong[0], latLong[1])]
+
+	# iterate over every 100 points
+	for action in actions:
+		dr, dc = getDelta(action)
+		start = (start[0] + dr, start[1] + dc)
+		latLong = locationGrid.rowColToLatLong(start)
+		latLongPairs.append("{},{}".format(latLong[0], latLong[1]))
+		
+	results = []
+	for i in range(0, len(latLongPairs), 100):
+		# loop over every 100
+		r = requests.get("https://roads.googleapis.com/v1/snapToRoads", params={'key': MAPS_ROAD_KEY, \
+			'path': '|'.join(latLongPairs[i: i + 100]), 'interpolate': True})
+		
+		if r.status_code != 200:
+			return None
+
+		results += [(point['location']['latitude'], point['location']['longitude']) for point in r.json()['snappedPoints']]
+
+	return results
+
 
 
 def createHeatMap(data, title=None, showLegend=True):
@@ -78,6 +122,17 @@ def createHeatMap(data, title=None, showLegend=True):
 		plt.colorbar()
 
 	plt.show()
+
+
+def addressToLatLong(address):
+	r = requests.get("https://maps.googleapis.com/maps/api/geocode/json", params={'address': address, 'key': MAPS_GEOENCODING_KEY})
+	if r.status_code == 200:
+		results = r.json()['results']
+		if len(results) != 0:
+			info = results[0]['geometry']['location']
+			return (info['lat'], info['lng'])
+
+	return None
 
 
 class ShortestPath(searchUtil.SearchProblem):
@@ -154,7 +209,8 @@ class OptimalPath(searchUtil.SearchProblem):
         self.locationGrid = locationGrid 
 
         # 15 minutes / mile
-        self.maxActions = int(math.ceil(maxTime / 15.0 / self.locationGrid.getBlockSize()))
+        self.maxActions = int(math.floor(maxTime / 15.0 / self.locationGrid.getBlockSize()))
+
 
     def startState(self):
         return (self.start, 0)
@@ -188,8 +244,6 @@ class OptimalPath(searchUtil.SearchProblem):
         return results 
 
 
-
-
 if __name__ == '__main__':
 
 	# chicago dimensions
@@ -212,9 +266,17 @@ if __name__ == '__main__':
 			predicted_prob = logreg.predict_proba(sample)
 			locationGrid.locationGrid[i][j] = predicted_prob[0][1]
 
-	# latitude, longitude, modelFile
-	start = (150, 200)
-	end = (200, 240)
+	start = "1824 W Pershing Rd, Chicago, IL 60609"
+	end = "8000 Michigan Avenue, Chicago, IL 60609"
+
+	startLatLong = addressToLatLong(start)
+	endLatLong = addressToLatLong(end)
+
+	if start is None or end is None:
+		quit()
+
+	start = locationGrid.latLongToRowCol(startLatLong)
+	end = locationGrid.latLongToRowCol(endLatLong)
 	modelFile = 'logisticModel.pkl'
 
 	ucs = searchUtil.UniformCostSearch(verbose=0)
@@ -224,19 +286,20 @@ if __name__ == '__main__':
 	# displayResults also changes locationGrid, so need
 	# to create separate instance of class in each call or copy grid beforehand
 
-	# shortest path
+	# # shortest path
 	# ucs.solve(ShortestPath(start, end, locationGrid))
 	# actions = ucs.actions
 	# displayResults(actions, start, locationGrid, "Shortest Path")
 
 	# # safest path
-	# ucs.solve(SafestPath(start, end, locationGrid))
-	# actions = ucs.actions
+	ucs.solve(SafestPath(start, end, locationGrid))
+	actions = ucs.actions
 	# displayResults(actions, start, locationGrid, "Safest Path")
 
-	# safest path
-	ucs.solve(OptimalPath(start, end, locationGrid, 150))
-	actions = ucs.actions
-	print 'Total Cost: {}'.format(ucs.totalCost)
-	displayResults(actions, start, locationGrid, "Optimal Path")
+	# # best path
+	# time = 120
+	# ucs.solve(OptimalPath(start, end, locationGrid, time))
+	# actions = ucs.actions
+	print snapPoints(actions, start, locationGrid)
+# 	displayResults(actions, start, locationGrid, "Optimal Path, T = {}".format(time))
 
