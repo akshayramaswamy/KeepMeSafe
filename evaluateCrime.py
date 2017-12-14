@@ -28,10 +28,24 @@ class LocationGrid(object):
 
 
 	def latToRow(self, latitude):
-		return int(math.floor( abs(latitude - self.topLeft[0]) / self.degreeBlockSize ))
+		return int( (self.topLeft[0] - latitude) / self.degreeBlockSize )
 
 	def longToCol(self, longitude):
-		return int(math.floor( abs(longitude - self.topLeft[1]) / self.degreeBlockSize ))
+		return int( (longitude - self.topLeft[1]) / self.degreeBlockSize )
+
+	def latLongToRowCol(self, latLongPair):
+		latitude, longitude = latLongPair
+		return (self.latToRow(latitude), self.longToCol(longitude))
+
+	def rowToLat(self, row):
+		return self.topLeft[0] - row * self.mileBlockSize / self.MILES_PER_DEGREE
+
+	def colToLong(self, col):
+		return self.topLeft[1] + col * self.mileBlockSize / self.MILES_PER_DEGREE
+
+	def rowColToLatLong(self, rowColPair):
+		row, col = rowColPair
+		return (self.rowToLat(row), self.colToLong(col))
 
 	def inBounds(self, r, c):
 		return r >= 0 and r < self.numRows() and c >= 0 and c < self.numCols()
